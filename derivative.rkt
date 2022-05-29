@@ -40,8 +40,9 @@
        (expt delta 2))))
 
 (define (higher-derivative fn a order)
-  (let ((delta (expt 10 -12)) ;;TODO: Find a better delta
+  (let ((delta (expt 2 (round (/ -30 order))))
         (order+1 (add1 order)))
+     ;;Alternative: 1/(2delta)^n * sum(((-1)^n)*(n k)*f(x + (n-2k)delta))
     (letrec ((aux-sum (λ (k)
                         (* (expt (- 1) (+ k order))
                            (n-choose-k order k)
@@ -51,6 +52,24 @@
                                 (aux-sum-rec (add1 k) (+ sum (aux-sum k)))))))
       (exact->inexact (/ (aux-sum-rec 0 0)
                          (expt delta order))))))
+
+(define (left-integral fn a b n)
+  (integral fn a b n 0))
+
+(define (right-integral fn a b n)
+  (integral fn a b n 1))
+
+(define (middle-integral fn a b n)
+  (integral fn a b n 0.5))
+
+(define (integral fn a b n (initial 0))
+  (let ((h (/ (- b a) n)))
+    (letrec ((sum-rec (λ (i sum)
+                        (if (> i n)
+                            sum
+                            (sum-rec (+ x h)
+                                     (+ sum (* h (fn x))))))))
+      (exact->inexact (sum-rec (+ a ( * h initial)) 0)))))
 
 (define (benchmark fn)
   (map (λ (benchmark) (fn (first benchmark) (second benchmark)))
