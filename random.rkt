@@ -13,23 +13,30 @@
           (generate-box-muller-transformed-number)
           (generate-number)))
     (define/public (generate-box-muller-transformed-number)
-      (let ((u1 (generate-number))
-            (u2 (generate-number)))
-        (* (sqrt (* -2 (if (zero? u1) 0 (log u1))))
-           (cos (* 2 pi u2)))))
+      (let* ((u1 (generate-number))
+             (u2 (generate-number))
+             (common (sqrt (* -2 (if (zero? u1) 0 (log u1)))))
+             (angle (* 2 pi u2)))
+        (list
+         (* common (cos angle))
+         (* common (sin angle)))))
     (define/public (get-seed) this-seed)
     (define/public (plot-bitmap width height (normalized? #f))
       (flomap->bitmap
        (build-flomap 1 width height
                      (λ (_0 _1 _2)
-                       (generate-uniform-or-normalized-number normalized?)))))
+                       (let ((value
+                              (generate-uniform-or-normalized-number normalized?)))
+                         (if (list? value) (car value) value))))))
     (define/public (plot-histogram samples bins (normalized? #f))
-      (plot
-       (discrete-histogram
-        (list->histogram
-         (build-list samples (λ (_)
-                               (generate-uniform-or-normalized-number normalized?)))
-         bins))))))
+      (let ((list (build-list samples
+                            (λ (_)
+                              (generate-uniform-or-normalized-number normalized?)))))
+        (plot
+         (discrete-histogram
+          (list->histogram
+           (if (list? (car list)) (apply append list) list)
+           bins)))))))
 
 (define lcg%
   (class random%
@@ -70,12 +77,18 @@
     (define this-seed s1)
     (define/override (generate-number)
       (set! this-s1 (modulo (* 171 this-s1)
-                       30269))
+                            30269))
       (set! this-s2 (modulo (* 172 this-s2)
-                       30307))
+                            30307))
       (set! this-s3 (modulo (* 170 this-s3)
-                       30323))
+                            30323))
       (let ((r (+ (/ this-s1 30269.0)
-                 (/ this-s2 30307.0)
-                 (/ this-s3 30323.0))))
-        (abs (- r (round r)))))))
+                  (/ this-s2 30307.0)
+                  (/ this-s3 30323.0))))
+        (- r (truncate r))))))
+
+(define native%
+  (class random%
+    (super-new)
+    (define/override (generate-number)
+      (random))))
