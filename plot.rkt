@@ -2,7 +2,9 @@
 
 (require plot images/flomap)
 
-(provide plot discrete-histogram list->histogram flomap->bitmap flomap-normalize build-flomap)
+(provide plot discrete-histogram
+         list->histogram flomap->bitmap flomap-normalize
+         build-flomap function points)
 
 (define (list->histogram list n)
   (letrec ((min-value (apply min list))
