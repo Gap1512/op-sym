@@ -58,3 +58,56 @@
              (if (<= (length simulation)
                      rescue-time)
                  0 1)))) samples))
+
+(define (black-red-green-roulette bet options house-advantage)
+  (let ((result (random 1 (add1 options))))
+    (if (and (> result house-advantage)
+             (or
+              (and (even? result)
+                   (equal? bet 'black))
+              (and (odd? result)
+                   (equal? bet 'red))))
+        'win
+        'lose)))
+
+(define (place-bet)
+  (if (< (random) 0.5) 'black 'red))
+
+(define (play-roulette options house-advantage actual-cash)
+  (match-define (vector bet-number amount) actual-cash)
+  ((if (equal?
+        (black-red-green-roulette
+         (place-bet)
+         options
+         house-advantage)
+        'win)
+       add1 sub1)
+   amount))
+
+(define (stop-playing? min max actual-cash)
+  (match-define (vector bet-number amount) actual-cash)
+  (not (<= min amount max)))
+
+(define (gambler-ruin min max options house-advantage initial-cash)
+  (random-walk
+   initial-cash
+   (curry play-roulette options house-advantage)
+   (curry stop-playing? min max)))
+
+(define (multiple-gambler-ruin min max options house-advantage initial-cash times #:key key)
+  (build-list
+      times
+      (λ (n)
+        (key
+         (gambler-ruin min max options house-advantage initial-cash)))))
+
+(define (probability-of-doubling-money options house-advantage initial-cash samples)
+  (/
+   (apply
+    +
+    (multiple-gambler-ruin
+     0 (* 2 initial-cash) options house-advantage initial-cash samples
+     #:key (λ (simulation)
+             (if (equal? (vector-ref (last simulation) 1) -1)
+                 0 1))))
+   samples))
