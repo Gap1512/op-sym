@@ -55,7 +55,7 @@
            (expt xi j))))))))
 
 (define (polynomial-regression-with-inverse list-x list-y order)
-  (let ((hat-x (hat-x list-x order)))
+  (let ((hat-x (hat-x list-x (add1 order))))
     (times (inv (m-transpose-times-n hat-x hat-x))
            (m-transpose-times-n hat-x (matrix list-y)))))
     

@@ -4,7 +4,7 @@
 
 (provide plot discrete-histogram
          list->histogram flomap->bitmap flomap-normalize
-         build-flomap function points)
+         build-flomap function points lines)
 
 (define (list->histogram list n)
   (letrec ((min-value (apply min list))
