@@ -2,12 +2,14 @@
 
 (require "plot.rkt")
 
-(define (random-walk initial-value new-state-from-last-one should-stop?)
+(provide simulate)
+
+(define (simulate initial-value new-state-from-last-one should-stop?)
   (do ((i 1 (add1 i))
        (results
         (list (vector 0 initial-value))
         (cons (vector i (new-state-from-last-one (car results))) results)))
-    ((should-stop? (car results))
+    ((should-stop? (car results) i)
      (reverse results))))
 
 (define (move-bug step direction actual-position) 
@@ -21,12 +23,12 @@
                 'right)
             y))
 
-(define (is-dead? min max actual-position)
+(define (is-dead? min max actual-position _)
   (match-define (vector x y) actual-position)
   (not (<= min y max)))
 
 (define (random-walk-bug min max initial-position step probability-left)
-  (random-walk
+  (simulate
    initial-position
    (curry move-bug-randomly step probability-left)
    (curry is-dead? min max)))
@@ -84,12 +86,12 @@
        add1 sub1)
    amount))
 
-(define (stop-playing? min max actual-cash)
+(define (stop-playing? min max actual-cash _)
   (match-define (vector bet-number amount) actual-cash)
   (not (<= min amount max)))
 
 (define (gambler-ruin min max options house-advantage initial-cash)
-  (random-walk
+  (simulate
    initial-cash
    (curry play-roulette options house-advantage)
    (curry stop-playing? min max)))
