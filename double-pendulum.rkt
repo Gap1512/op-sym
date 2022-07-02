@@ -8,9 +8,9 @@
 
 (define DEFAULT-RADIUS 4)
 
-(define DEFAULT-WIDTH 200)
+(define DEFAULT-WIDTH 300)
 
-(define DEFAULT-HEIGHT 200)
+(define DEFAULT-HEIGHT 300)
 
 (define DEFAULT-BACKGROUND
   (rectangle DEFAULT-WIDTH DEFAULT-HEIGHT "solid" "white"))
