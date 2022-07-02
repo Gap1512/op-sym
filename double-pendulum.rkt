@@ -6,6 +6,8 @@
 
 (define DEFAULT-PEN (pen "red" 3 "solid" "butt" "bevel"))
 
+(define DEFAULT-RADIUS 4)
+
 (define DEFAULT-WIDTH 200)
 
 (define DEFAULT-HEIGHT 200)
@@ -14,16 +16,27 @@
   (rectangle DEFAULT-WIDTH DEFAULT-HEIGHT "solid" "white"))
 
 (define (draw-pendulum
-         base-x base-y length-1 theta-1 length-2 theta-2
+         base-x base-y
+         length-1 theta-1 mass-1
+         length-2 theta-2 mass-2
          (background DEFAULT-BACKGROUND)
-         (pen DEFAULT-PEN))
+         (pen DEFAULT-PEN)
+         (base-radius DEFAULT-RADIUS))
   (let* ((end-x-1 (+ base-x (* (sin theta-1) length-1)))
          (end-y-1 (+ base-y (* (cos theta-1) length-1)))
          (end-x-2 (+ end-x-1 (* (sin theta-2) length-2)))
-         (end-y-2 (+ end-y-1 (* (cos theta-2) length-2))))
-    (add-line
-     (add-line background base-x base-y end-x-1 end-y-1 pen)
-     end-x-1 end-y-1 end-x-2 end-y-2 pen)))
+         (end-y-2 (+ end-y-1 (* (cos theta-2) length-2)))
+         (radius-1 (* mass-1 base-radius))
+         (radius-2 (* mass-2 base-radius)))
+    (underlay/xy
+     (underlay/xy
+      (add-line
+       (add-line background base-x base-y end-x-1 end-y-1 pen)
+       end-x-1 end-y-1 end-x-2 end-y-2 pen)
+      (- end-x-1 radius-1) (- end-y-1 radius-1)
+      (circle radius-1 "solid" "black"))
+     (- end-x-2 radius-2) (- end-y-2 radius-2)
+     (circle radius-2 "solid" "black"))))
 
 (define (double-pendulum-func t y dy params)
   (match-define (vector theta-1 w-1 theta-2 w-2) y)
@@ -97,12 +110,13 @@
 (struct interaction-state
   (status current-theta-1 current-theta-2 theta-1-values theta-2-values))
 
-(define (render-state base-x base-y length-1 length-2 background pen state)
+(define (render-state base-x base-y length-1 length-2 mass-1 mass-2
+                      background pen base-radius state)
   (draw-pendulum
    base-x base-y
-   length-1 (vector-ref (interaction-state-current-theta-1 state) 1)
-   length-2 (vector-ref (interaction-state-current-theta-2 state) 1)
-   background pen))
+   length-1 (vector-ref (interaction-state-current-theta-1 state) 1) mass-1
+   length-2 (vector-ref (interaction-state-current-theta-2 state) 1) mass-2
+   background pen base-radius))
 
 (define (next-state state)
   (match-define
@@ -164,9 +178,12 @@
          length-1 length-2
          duration frame-time theta-step
          (background DEFAULT-BACKGROUND)
-         (pen DEFAULT-PEN))
+         (pen DEFAULT-PEN)
+         (base-radius DEFAULT-RADIUS))
   (big-bang (interaction-state 'configuring #(0.0 0.0) #(0.0 0.0) '() '())
-    (to-draw (curry render-state base-x base-y length-1 length-2 background pen))
+    (to-draw (curry render-state
+                    base-x base-y length-1 length-2 mass-1 mass-2
+                    background pen base-radius))
     (on-tick next-state frame-time)
     (on-key (curry change-status gravity mass-1 mass-2
                    length-1 length-2 duration frame-time theta-step))
